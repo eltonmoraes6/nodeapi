@@ -1,36 +1,44 @@
 const express = require('express');
 const app = express();
+const path = require('path');
 const morgan = require('morgan');
-const bodyParser = require('body-parser');
-const config = require('./api/config/config');
+const helmet = require('helmet');
+const compression = require('compression');
+const cors = require('cors');
 
-const productRouter = require('./api/routes/products');
-const orderRouter = require('./api/routes/orders');
-const userRouter = require('./api/routes/user');
+//app dependencies 
+const db = require('./api/config/database');
 
-config.MY_CONNECTION();
+//Initialization
+db.MY_CONNECTION();
 
+//Middleware
 app.use(morgan('dev'));
-app.use('/uploads', express.static('uploads'));
-app.use(bodyParser.urlencoded({
+app.use(helmet());
+app.use(compression());
+app.use(express.urlencoded({
     extended: false
 }));
-app.use(bodyParser.json());
+app.use(express.json());
 
-app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-    if (req.method === 'OPTIONS') {
-        res.header('Access-Control-Allow-Methods', 'PUT, POST, PATCH, DELETE, GET');
-        return res.status(200).json({});
-    }
-    next();
+app.use(cors());
+
+//Static Files
+app.use(express.static(path.join(__dirname, 'public')));
+app.use('/uploads', express.static('public/uploads'));
+
+//Routes
+app.use('/api/products', require('./api/routes/products'));
+app.use('/api/orders', require('./api/routes/orders'));
+app.use('/api/user', require('./api/routes/user'));
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname + '/public/views/index.html'));
 });
 
-app.use('/products', productRouter);
-app.use('/orders', orderRouter);
-app.use('/user', userRouter);
-
+process.on('uncaughtException', function (err) {
+    console.log(err);
+});
 
 app.use((req, res, next) => {
     const error = new Error('Not found');

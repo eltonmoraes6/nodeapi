@@ -1,12 +1,14 @@
 const mongoose = require('mongoose');
 const User = require('../models/user');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const config = require('../config/config');
 var fs = require("fs");
 
-exports.user_signup = async (req, res, next) => {
-    await User.find({
+const ctrl = {};
+
+ctrl.user_signup = (req, res) => {
+    User.find({
             email: req.body.email
         })
         .exec()
@@ -54,42 +56,44 @@ exports.user_signup = async (req, res, next) => {
                 });
             }
         });
-}
+};
 
-exports.user_signin = async (req, res, next) => {
-    await User.findOne({
+ctrl.user_signin = (req, res) => {
+    User.findOne({
             email: req.body.email
         })
         .exec()
         .then(user => {
-            if (user.length < 1) {
+            if (!user) {
                 return res.status(401).json({
                     message: 'Auth failed'
                 });
-            }
-            bcrypt.compare(req.body.password, user.password, (err, result) => {
-                if (err) {
-                    return res.status(401).json({
+            } else {
+                bcrypt.compare(req.body.password, user.password, (err, result) => {
+                    if (err) {
+                        return res.status(401).json({
+                            message: 'Auth failed'
+                        });
+                    }
+                    if (result) {
+                        const token = jwt.sign({
+                            email: user,
+                            id: user._id
+                        }, config.secret, {
+                            expiresIn: "1h"
+                        });
+                        return res.status(200).json({
+                            auth: true,
+                            message: 'Auth successful',
+                            token: token,
+                        });
+                    }
+                    res.status(401).json({
                         message: 'Auth failed'
                     });
-                }
-                if (result) {
-                    const token = jwt.sign({
-                        email: user,
-                        id: user._id
-                    }, config.secret, {
-                        expiresIn: "1h"
-                    });
-                    return res.status(200).json({
-                        auth: true,
-                        message: 'Auth successful',
-                        token: token,
-                    });
-                }
-                res.status(401).json({
-                    message: 'Auth failed'
                 });
-            });
+            }
+
         })
         .catch(err => {
             console.log(err);
@@ -97,10 +101,10 @@ exports.user_signin = async (req, res, next) => {
                 error: err
             });
         });
-}
+};
 
-exports.user_find_one = async (req, res, next) => {
-    await User.findById({
+ctrl.user_find_one = (req, res) => {
+    User.findById({
             _id: req.params.id
         })
         .select('email _id')
@@ -122,9 +126,9 @@ exports.user_find_one = async (req, res, next) => {
                 error: err
             });
         });
-}
+};
 
-exports.update_user_avatar = (req, res, next) => {
+ctrl.update_user_avatar = (req, res) => {
     if (req.file) {
         var newAvatar = new Buffer(fs.readFileSync(req.file.path)).toString("base64");
 
@@ -161,10 +165,10 @@ exports.update_user_avatar = (req, res, next) => {
             message: 'No file provided'
         });
     }
-}
+};
 
-exports.user_remove = async (req, res, next) => {
-    await User.remove({
+ctrl.user_remove = (req, res) => {
+    User.remove({
             _id: req.params.id
         })
         .exec()
@@ -179,4 +183,6 @@ exports.user_remove = async (req, res, next) => {
                 error: err
             });
         });
-}
+};
+
+module.exports = ctrl;

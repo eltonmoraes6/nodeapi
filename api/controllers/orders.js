@@ -1,9 +1,11 @@
 const mongoose = require('mongoose');
 const Order = require('../models/order');
 const Product = require('../models/product');
-const config = require('../config/config')
+const config = require('../config/config');
 
-exports.orders_get_all = async (req, res, next) => {
+const ctrl = {};
+
+ctrl.orders_get_all = async (req, res, next) => {
     await Order.find()
         .select('product quantity _id')
         .populate('product', 'name price')
@@ -18,7 +20,7 @@ exports.orders_get_all = async (req, res, next) => {
                         quantity: doc.quantity,
                         request: {
                             type: 'GET',
-                            url: config.ordersApiUri + doc._id
+                            url: config.webApiUrl + 'orders/' + doc._id
                         }
                     }
                 })
@@ -29,9 +31,9 @@ exports.orders_get_all = async (req, res, next) => {
                 error: err
             });
         });
-}
+};
 
-exports.orders_create_order = async (req, res, next) => {
+ctrl.orders_create_order = async (req, res, next) => {
     await Product.findById(req.body.id)
         .then(product => {
             if (!product) {
@@ -57,7 +59,7 @@ exports.orders_create_order = async (req, res, next) => {
                 },
                 request: {
                     type: 'GET',
-                    url: config.ordersApiUri + result._id
+                    url: config.webApiUrl + 'orders/' + result._id
                 }
             });
         })
@@ -67,9 +69,9 @@ exports.orders_create_order = async (req, res, next) => {
                 error: err
             });
         });
-}
+};
 
-exports.orders_get_order = async (req, res, next) => {
+ctrl.orders_get_order = async (req, res, next) => {
     await Order.findById(req.params.id)
         .populate('productID', 'name price')
         .exec()
@@ -83,7 +85,7 @@ exports.orders_get_order = async (req, res, next) => {
                 order: order,
                 request: {
                     type: 'GET',
-                    url: config.ordersApiUri
+                    url: config.webApiUrl + 'orders/'
                 }
             });
         })
@@ -92,9 +94,9 @@ exports.orders_get_order = async (req, res, next) => {
                 error: err
             })
         });
-}
+};
 
-exports.orders_remove_order = async (req, res, next) => {
+ctrl.orders_remove_order = async (req, res, next) => {
     await Order.remove({
             _id: req.params.id
         })
@@ -104,7 +106,7 @@ exports.orders_remove_order = async (req, res, next) => {
                 message: 'Order deleted',
                 request: {
                     type: 'POST',
-                    url: config.ordersApiUri,
+                    url: config.webApiUrl + 'orders/',
                     body: {
                         id: 'ID',
                         quantity: 'Number'
@@ -117,4 +119,6 @@ exports.orders_remove_order = async (req, res, next) => {
                 error: err
             })
         });
-}
+};
+
+module.exports = ctrl;

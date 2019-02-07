@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const checkAuth = require('../middleware/check-auth');
 const ProductController = require('../controllers/products');
-const multerConfig = require('../config/config');
+const multerConfig = require('../config/multerConfig');
 
 router.get('/', ProductController.products_get_all);
 router.post('/', checkAuth, multerConfig.MY_UPLOAD_STORAGE_MULTER.single('productImage'), ProductController.products_create_product);

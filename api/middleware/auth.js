@@ -1,7 +1,9 @@
 const jwt = require('jsonwebtoken');
 const config = require('../config/config');
 
-exports.ensureAuthorized = function (req, res, next) {
+const ctrl = {};
+
+ctrl.ensureAuthorized = function (req, res, next) {
     var token = req.body.token || req.body.query || req.headers['x-access-token'];
     if (token) {
         //verify token
@@ -22,4 +24,6 @@ exports.ensureAuthorized = function (req, res, next) {
             message: 'No token provided'
         });
     }
-}
+};
+
+module.exports = ctrl;

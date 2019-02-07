@@ -2,7 +2,9 @@ const mongoose = require('mongoose');
 const Product = require('../models/product');
 const config = require('../config/config');
 
-exports.products_get_all = (req, res, next) => {
+const ctrl = {};
+
+ctrl.products_get_all = (req, res, next) => {
     Product.find()
         .select('name price _id productImage')
         .exec()
@@ -17,7 +19,7 @@ exports.products_get_all = (req, res, next) => {
                         _id: doc._id,
                         request: {
                             type: 'GET',
-                            url: config.productsApiUri + doc._id
+                            url: config.webApiUrl + 'products/' + doc._id
                         }
                     }
                 })
@@ -35,9 +37,9 @@ exports.products_get_all = (req, res, next) => {
                 error: err
             });
         });
-}
+};
 
-exports.products_create_product = (req, res, next) => {
+ctrl.products_create_product = (req, res, next) => {
     const product = new Product({
         _id: new mongoose.Types.ObjectId(),
         name: req.body.name,
@@ -55,7 +57,7 @@ exports.products_create_product = (req, res, next) => {
                 _id: result._id,
                 request: {
                     type: 'GET',
-                    url: config.productsApiUri + result._id
+                    url: config.webApiUrl + 'products/' + result._id
                 }
             }
         });
@@ -66,9 +68,9 @@ exports.products_create_product = (req, res, next) => {
         })
     });
 
-}
+};
 
-exports.products_get_product = (req, res, next) => {
+ctrl.products_get_product = (req, res, next) => {
     const id = req.params.id;
     Product.findById(id)
         .select('name price _id productImage')
@@ -80,7 +82,7 @@ exports.products_get_product = (req, res, next) => {
                     product: doc,
                     request: {
                         type: 'GET',
-                        url: config.productsApiUri
+                        url: config.webApiUrl + 'products/'
                     }
                 });
             } else {
@@ -95,9 +97,9 @@ exports.products_get_product = (req, res, next) => {
                 error: err
             });
         });
-}
+};
 
-exports.products_update_product = (req, res, next) => {
+ctrl.products_update_product = (req, res, next) => {
     const id = req.params.id;
     const updateOps = {};
     for (const ops of req.body) {
@@ -115,7 +117,7 @@ exports.products_update_product = (req, res, next) => {
                 message: 'Product updated',
                 request: {
                     type: 'GET',
-                    url: config.productsApiUri
+                    url: config.webApiUrl + 'products/'
                 }
             });
         }).catch(err => {
@@ -124,9 +126,9 @@ exports.products_update_product = (req, res, next) => {
                 error: err
             })
         });
-}
+};
 
-exports.products_remove_product = (req, res, next) => {
+ctrl.products_remove_product = (req, res, next) => {
     const id = req.params.id;
     Product.remove({
         _id: id
@@ -135,7 +137,7 @@ exports.products_remove_product = (req, res, next) => {
             message: 'Product deleted',
             request: {
                 type: 'POST',
-                url: config.productsApiUri,
+                url: config.webApiUrl + 'products/',
                 body: {
                     name: 'String',
                     price: 'Number'
@@ -148,4 +150,6 @@ exports.products_remove_product = (req, res, next) => {
             error: err
         })
     });
-}
+};
+
+module.exports = ctrl;
